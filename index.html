@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZION程序生成器</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/animations.css">
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</head>
+<body>
+    <!-- 主内容区域 -->
+    <main class="app-content full-height">
+        <!-- AI生成标签页 -->
+        <div id="ai-tab" class="tab-content active">
+            <div class="card">
+                <h2 style="margin-top: 0; margin-bottom: 15px; font-size: 20px;">ZION专业程序猿</h2>
+                <p style="margin-top: 0; margin-bottom: 20px; color: var(--primary-color); opacity: 0.8; font-size: 14px;">描述你想要的程序功能，ZION将为你生成软件</p>
+                
+                <textarea id="prompt-input" class="prompt-input" placeholder="请详细描述你想要的应用程序功能，例如：创建一个红色按钮，点击后显示'Hello World'弹窗..."></textarea>
+                
+                <div style="display: flex; flex-wrap: wrap;">
+                    <button class="button ripple" onclick="handleGenerateClick()" id="generate-btn">
+                        <span class="icon">✨</span> 生成
+                    </button>
+                    <button class="button button-secondary ripple" onclick="clearPrompt()">
+                        <span class="icon">🗑️</span> 清空
+                    </button>
+                </div>
+                
+                <!-- 代码生成显示区域 -->
+                <div id="code-generation-box" style="display: none; margin-top: 20px;">
+                    <div class="generating-title">正在生成互动网页</div>
+                    <div class="code-display-box">
+                        <div id="generatedCode" class="generated-code"></div>
+                        <div class="bottom-progress">
+                            <div class="progress-text" id="progress-text">正在初始化...</div>
+                            <div class="progress-percent" id="progress-percent">0%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 代码生成区域(旧版，保留用于显示结果) -->
+                <div id="code-generation" class="code-generation">
+                    <div class="generation-status" id="generation-status">
+                        <span class="status-icon">⚙️</span>
+                        <span id="status-text">准备生成代码...</span>
+                    </div>
+                    
+                    <div class="code-header">
+                        <span></span>
+                        <div class="code-actions">
+                            <button class="code-action-btn" onclick="copyCode()">
+                                <span class="icon">📋</span> 复制
+                            </button>
+                            <button class="code-action-btn" onclick="openPreview()">
+                                <span class="icon">👁️</span> 预览
+                            </button>
+                            <button class="code-action-btn" onclick="openSaveModal()">
+                                <span class="icon">💾</span> 保存
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="code-content" class="code-content"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 应用桌面标签页 -->
+        <div id="desktop-tab" class="tab-content">
+            <div class="search-bar">
+                <input type="text" class="search-input" placeholder="搜索应用..." oninput="filterApps(this.value)" />
+            </div>
+            
+            <div id="app-desktop" class="app-grid"></div>
+            
+            <div id="empty-state" class="empty-state">
+                <div class="empty-icon">🚀</div>
+                <h3>还没有应用</h3>
+                <p>球球Zion生成并保存你的第一个应用</p>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 底部标签栏 -->
+    <div class="app-tabbar">
+        <a href="#" class="tabbar-item active" onclick="switchTab('ai')">
+            <div class="tabbar-icon">✨</div>
+            Zion编写
+        </a>
+        <a href="#" class="tabbar-item" onclick="switchTab('desktop')">
+            <div class="tabbar-icon">🏠</div>
+            应用
+        </a>
+    </div>
+    
+    <!-- 预览容器 -->
+    <div id="preview-container" class="preview-container">
+        <div class="preview-header">
+            <div class="preview-back" onclick="closePreview()">←</div>
+            <div class="preview-title">预览</div>
+            <div class="code-action-btn" onclick="copyCode()">
+                <span class="icon">📋</span> 复制
+            </div>
+        </div>
+        <iframe id="preview-frame"></iframe>
+        <div class="preview-footer" id="preview-from-ai">
+            <button class="save-app-button" onclick="openSaveModal()">
+                <span class="icon">💾</span> 保存应用
+            </button>
+        </div>
+    </div>
+    
+    <!-- 保存模态框 -->
+    <div id="save-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">保存应用</div>
+                <div class="close-button" onclick="closeModal('save-modal')">×</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="app-name">应用名称</label>
+                <input type="text" id="app-name" placeholder="输入应用名称">
+            </div>
+            
+            <div class="form-group">
+                <label>应用图标</label>
+                <div class="icon-selector" id="icon-selector">
+                    <div class="icon-option" data-icon="🚀">🚀</div>
+                    <div class="icon-option" data-icon="🎮">🎮</div>
+                    <div class="icon-option" data-icon="📝">📝</div>
+                    <div class="icon-option" data-icon="🎨">🎨</div>
+                    <div class="icon-option" data-icon="📊">📊</div>
+                    <div class="icon-option" data-icon="🔍">🔍</div>
+                    <div class="icon-option" data-icon="💡">💡</div>
+                    <div class="icon-option" data-icon="🎯">🎯</div>
+                </div>
+            </div>
+            
+            <div class="save-button-container">
+                <button class="save-app-button" onclick="saveApp()">
+                    <span class="icon">💾</span> 保存应用
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 上下文菜单 -->
+    <div id="context-menu" class="context-menu" style="display: none;">
+        <div class="menu-item" onclick="editApp()">
+            <div class="icon">✏️</div>
+            <div>编辑</div>
+        </div>
+        <div class="menu-item delete" onclick="deleteApp()">
+            <div class="icon">🗑️</div>
+            <div>删除</div>
+        </div>
+    </div>
+</body>
+</html> 
